@@ -1,7 +1,6 @@
 package main
 
 import (
-	"flag"
 	"log"
 	"strings"
 
@@ -9,20 +8,16 @@ import (
 )
 
 func main() {
-	setupFlag := flag.Bool("setup", false, "setup: configure a new YubiKey")
-	resetFlag := flag.Bool("reset", false, "reset: reset a YubiKey")
-	encryptFlag := flag.Bool("encrypt", false, "encrypt: encrypt some file")
-	fileNameFlag := flag.String("filename", "", "filename: file to encrypt or decrypt")
-	decryptFlag := flag.Bool("decrypt", false, "decrypt: decrypt some file")
-	flag.Parse()
+	var flag FlagSetter
+	flag.FlagSetting()
 
 	yk := connect()
 	core := &Core{}
 	core.YK = yk
 
-	if *setupFlag {
+	if *flag.Setup {
 		log.SetFlags(0)
-		if *resetFlag {
+		if *flag.Reset {
 			core.ResetPin()
 		}
 		pin := setPinPrompt()
@@ -46,33 +41,33 @@ func main() {
 		}
 	}
 
-	if *encryptFlag {
+	if *flag.Encrypt {
 		if err := ensureYK(core.YK); err != nil {
 			log.Fatal("Need Keep YubiKey inserted")
 		}
 
-		if fileNameFlag == nil {
+		if flag.FileName == nil {
 			log.Fatal("Must specify a file name")
 		}
 
 		AESKey := core.GenerateAESKey()
 
-		filename := EncryptFile(*fileNameFlag, AESKey)
+		filename := EncryptFile(*flag.FileName, AESKey)
 		log.Println("Yubikey File Encryted Successfully")
 		log.Println(filename)
 	}
 
-	if *decryptFlag {
+	if *flag.Decrypt {
 		if err := ensureYK(core.YK); err != nil {
 			log.Fatal("Need Keep YubiKey inserted")
 		}
 
-		if fileNameFlag == nil {
+		if flag.FileName == nil {
 			log.Fatal("Must specify a file name")
 		}
 
 		AESKey := core.GenerateAESKey()
-		filename := DecryptFile(*fileNameFlag, AESKey)
+		filename := DecryptFile(*flag.FileName, AESKey)
 		log.Println("Yubikey File Decryted Successfully")
 		log.Println(filename)
 	}
